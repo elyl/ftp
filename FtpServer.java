@@ -14,8 +14,11 @@ public class FtpServer
     {
 	Socket	s;
 
-	s = this.ss.accept();
-	new Thread(new FtpServerClient(s)).start();
+	while (true)
+	    {
+		s = this.ss.accept();
+		new Thread(new FtpServerClient(s)).start();
+	    }
     }
     
     public static void main(String args[]) throws Exception
