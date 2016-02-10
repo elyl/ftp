@@ -9,6 +9,7 @@ public class FtpServerClient implements Runnable
     private FtpServer	server;
     private String	user;
     private boolean	logged_in;
+    private boolean	running;
     
     public FtpServerClient(Socket s, FtpServer server) throws Exception
     {
@@ -16,6 +17,7 @@ public class FtpServerClient implements Runnable
 	this.user = null;
 	this.logged_in = false;
 	this.server = server;
+	this.running = true;
 	out = new PrintWriter(s.getOutputStream(), true);
     }
 
@@ -24,16 +26,19 @@ public class FtpServerClient implements Runnable
 	byte	b[] = new byte[255];
 	String	str;
 
-	try
+	while (this.running)
 	    {
-		s.getInputStream().read(b);
-		str = new String(b);
-		System.out.println(s);
-		this.processRequest(str);
-	    }
-	catch (Exception e)
-	    {
-		e.printStackTrace();
+		try
+		    {
+			s.getInputStream().read(b);
+			str = new String(b);
+			System.out.println(s);
+			this.processRequest(str);
+		    }
+		catch (Exception e)
+		    {
+			e.printStackTrace();
+		    }
 	    }
     }
 
@@ -42,7 +47,6 @@ public class FtpServerClient implements Runnable
 	String	params[];
 	
 	params = str.split(" ");
-	System.out.println(params.length);
 	if (params.length >= 2)
 	    {
 		this.user = params[1];
@@ -54,14 +58,20 @@ public class FtpServerClient implements Runnable
 
     public void processPASS(String str)
     {
-	String params[];
+	String	params[];
+	String	pass;
 	
 	if (this.user != null)
 	    {
 		params = str.split(" ");
 		if (params.length >= 2)
 		    {
-			if (this.server.getUser(this.user).equals(params[1]))
+			System.out.println(this.user);
+			System.out.println(params.length);
+			System.out.println(params[1]);
+			pass = this.server.getUser(params[1]);
+			System.out.println(pass);
+			if (pass != null && pass.equals(params[1]))
 			    {
 				out.println(ReturnCodes.LOGGED_IN);
 				this.logged_in = true;
@@ -95,6 +105,7 @@ public class FtpServerClient implements Runnable
 
     public void processQUIT(String str) throws Exception
     {
+	this.running = false;
 	s.close();
     }
 
@@ -115,6 +126,8 @@ public class FtpServerClient implements Runnable
 
     public void processRequest(String str) throws Exception
     {
+	str = str.replace("\n", "");
+	System.out.println(str);
 	if (str.startsWith("USER"))
 	    this.processUSER(str);
 	else if (str.startsWith("PASS"))
