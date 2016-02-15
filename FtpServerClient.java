@@ -2,6 +2,7 @@ import java.net.Socket;
 import java.io.PrintWriter;
 import java.io.File;
 import java.util.Arrays;
+import java.nio.file.Path;
 
 public class FtpServerClient implements Runnable
 {
@@ -11,6 +12,7 @@ public class FtpServerClient implements Runnable
     private String	user;
     private boolean	logged_in;
     private boolean	running;
+    private String	pwd;
     
     public FtpServerClient(Socket s, FtpServer server) throws Exception
     {
@@ -19,6 +21,7 @@ public class FtpServerClient implements Runnable
 	this.logged_in = false;
 	this.server = server;
 	this.running = true;
+	this.setPwd("/home/elyl");
 	out = new PrintWriter(s.getOutputStream(), true);
 	out.println(ReturnCodes.CONNECTION_ESTABLISHED);
     }
@@ -35,7 +38,6 @@ public class FtpServerClient implements Runnable
 			Arrays.fill(b, (byte)0);
 			s.getInputStream().read(b);
 			str = new String(b);
-			//System.out.println(s);
 			this.processRequest(str);
 		    }
 		catch (Exception e)
@@ -111,17 +113,31 @@ public class FtpServerClient implements Runnable
 
     public void processPWD(String str)
     {
-	System.out.println("PWD NYI");
+	out.println(ReturnCodes.PWD + this.pwd);
     }
 
     public void processCWD(String str)
     {
-	System.out.println("CWD NYI");
-    }
+	String	params[];
+	File	f;
 
-    public void processCDUP(String str)
-    {
-	System.out.println("CDUP NYI");
+	params = str.split(" ");	
+	if (params.length >= 2)
+	    {
+		f = new File(params[1]);
+		if (!f.isAbsolute())
+		    f = new File(this.pwd + params[1]);
+		System.out.println(f);
+		if (f.exists())
+		    {
+			this.setPwd(f.toString());
+			out.println(ReturnCodes.DIRECTORY_CHANGED);
+		    }
+		else
+		    out.println(ReturnCodes.FILE_NOT_FOUND);
+	    }
+	else
+	    out.println(ReturnCodes.SYNTAX_ERROR);
     }
 
     public void processSYST(String str)
@@ -152,8 +168,15 @@ public class FtpServerClient implements Runnable
 	else if (str.startsWith("CWD"))
 	    this.processCWD(str);
 	else if (str.startsWith("CDUP"))
-	    this.processCDUP(str);
+	    this.processCWD(str);
 	else if (str.startsWith("SYST"))
 	    this.processSYST(str);
+    }
+
+    private void setPwd(String pwd)
+    {
+	if (!pwd.endsWith("/"))
+	    pwd += "/";
+	this.pwd = pwd;
     }
 }
