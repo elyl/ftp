@@ -2,6 +2,8 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Arrays;
 
 public class FtpServer
 {
@@ -28,7 +30,7 @@ public class FtpServer
 
     public String getUser(String user)
     {
-	return (users.get(user));
+	return (this.users.get(user));
     }
     
     public static void main(String args[]) throws Exception

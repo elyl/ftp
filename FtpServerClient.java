@@ -1,6 +1,7 @@
 import java.net.Socket;
 import java.io.PrintWriter;
 import java.io.File;
+import java.util.Arrays;
 
 public class FtpServerClient implements Runnable
 {
@@ -19,6 +20,7 @@ public class FtpServerClient implements Runnable
 	this.server = server;
 	this.running = true;
 	out = new PrintWriter(s.getOutputStream(), true);
+	out.println(ReturnCodes.CONNECTION_ESTABLISHED);
     }
 
     public void run()
@@ -30,9 +32,10 @@ public class FtpServerClient implements Runnable
 	    {
 		try
 		    {
+			Arrays.fill(b, (byte)0);
 			s.getInputStream().read(b);
 			str = new String(b);
-			System.out.println(s);
+			//System.out.println(s);
 			this.processRequest(str);
 		    }
 		catch (Exception e)
@@ -66,14 +69,11 @@ public class FtpServerClient implements Runnable
 		params = str.split(" ");
 		if (params.length >= 2)
 		    {
-			System.out.println(this.user);
-			System.out.println(params.length);
-			System.out.println(params[1]);
-			pass = this.server.getUser(params[1]);
-			System.out.println(pass);
+			pass = this.server.getUser(this.user);
 			if (pass != null && pass.equals(params[1]))
 			    {
 				out.println(ReturnCodes.LOGGED_IN);
+				out.println("230 - Happy ftp !");
 				this.logged_in = true;
 				return;
 			    }
@@ -124,9 +124,16 @@ public class FtpServerClient implements Runnable
 	System.out.println("CDUP NYI");
     }
 
+    public void processSYST(String str)
+    {
+	out.println("UNIX");
+    }
+
     public void processRequest(String str) throws Exception
     {
 	str = str.replace("\n", "");
+	str = str.replace("\r", "");
+	str = str.trim();
 	System.out.println(str);
 	if (str.startsWith("USER"))
 	    this.processUSER(str);
@@ -146,5 +153,7 @@ public class FtpServerClient implements Runnable
 	    this.processCWD(str);
 	else if (str.startsWith("CDUP"))
 	    this.processCDUP(str);
+	else if (str.startsWith("SYST"))
+	    this.processSYST(str);
     }
 }
