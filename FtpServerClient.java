@@ -1,6 +1,7 @@
 import java.net.Socket;
 import java.io.PrintWriter;
 import java.io.File;
+import java.io.FileReader;
 import java.util.Arrays;
 import java.nio.file.Path;
 
@@ -13,6 +14,7 @@ public class FtpServerClient implements Runnable
     private boolean	logged_in;
     private boolean	running;
     private String	pwd;
+    private PrintWriter	dataOut;
     
     public FtpServerClient(Socket s, FtpServer server) throws Exception
     {
@@ -90,18 +92,78 @@ public class FtpServerClient implements Runnable
 	    out.println(ReturnCodes.USER_KO);
     }
 
-    public void processRETR(String str)
+    public void processRETR(String str) throws Exception
     {
-	System.out.println("RETR NYI");
+	String	params[];
+	File	f;
+	
+	if (!this.logged_in)
+	    {
+		out.println(ReturnCodes.NOT_LOGGED_IN);
+		return;
+	    }
+	//Verifier output stream?
+	params = str.split(" ");
+	if (params.length < 2)
+	    {
+		out.println(ReturnCodes.SYNTAX_ERROR);
+		return;
+	    }
+	f = new File(params[1]);
+	if (!f.isAbsolute())
+	    f = new File(this.pwd + params[1]);
+	if (!f.exists())
+	    {
+		out.println(ReturnCodes.FILE_NOT_FOUND);
+		return;
+	    }
+	if (!f.canRead())
+	    {
+		out.println(ReturnCodes.ACCESS_DENIED);
+		return;
+	    }
+	dataOut.write(new FileReader(f).read());
+	out.println(ReturnCodes.TRANSFER_OK);
     }
 
     public void processSTOR(String str)
     {
-	System.out.println("STOR NYI");
+	String	params[];
+	File	f;
+	
+	if (!this.logged_in)
+	    {
+		out.println(ReturnCodes.NOT_LOGGED_IN);
+		return;
+	    }
+	params = str.split(" ");
+	if (params.length < 2)
+	    {
+		out.println(ReturnCodes.SYNTAX_ERROR);
+		return;
+	    }
+	f = new File(params[1]);
+	if (!f.isAbsolute())
+	    f = new File(this.pwd + params[1]);
+	if (f.isAbsolute() && !f.exists())
+	    {
+		out.println(ReturnCodes.FILE_NOT_FOUND);
+		return;
+	    }
+	if (!f.canWrite())
+	    {
+		out.println(ReturnCodes.ACCESS_DENIED);
+		return;
+	    }
     }
 
     public void processLIST(String str)
     {
+	if (!this.logged_in)
+	    {
+		out.println(ReturnCodes.NOT_LOGGED_IN);
+		return;
+	    }
 	System.out.println("LIST NYI");
     }
 

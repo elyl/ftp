@@ -9,6 +9,7 @@ public class ReturnCodes
     public static final String ACCESS_DENIED = "550 - Access denied";
     public static final String FILE_NOT_FOUND = "550 - File not found";
     public static final String COMMAND_OK = "200 - Command OK";
+    public static final String TRANSFER_OK = "226 - Transfer complete";
     public static final String SYNTAX_ERROR = "500 - Syntax Error";
     public static final String NOT_LOGGED_IN = "530 - Not logged in";
 }
