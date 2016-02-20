@@ -15,6 +15,7 @@ public class FtpServerClient implements Runnable
     private boolean	running;
     private String	pwd;
     private PrintWriter	dataOut;
+    private Socket	sout;
     
     public FtpServerClient(Socket s, FtpServer server) throws Exception
     {
@@ -207,6 +208,34 @@ public class FtpServerClient implements Runnable
 	out.println("UNIX");
     }
 
+    public void processPORT(String str)
+    {
+	String	params[];
+	String	addr;
+
+	params = str.split(" ")[1].split(",");
+	if (params.length < 6)
+	    {
+		out.println(ReturnCodes.SYNTAX_ERROR);
+		return;
+	    }
+	if (!this.logged_in)
+	    {
+		out.println(ReturnCodes.NOT_LOGGED_IN);
+		return;
+	    }
+	addr = params[0] + "." + params[1] + "." + params[2] + "." + params[3];
+	try
+	    {
+		this.sout = new Socket(addr, Integer.parseInt(params[4] + params[5]));
+		this.dataOut = new PrintWriter(this.sout.getOutputStream(), true);
+	    }
+	catch (Exception e)
+	    {
+		out.println(ReturnCodes.SYNTAX_ERROR); //Plutot host error, truc dans le genre
+	    }
+    }
+
     public void processRequest(String str) throws Exception
     {
 	str = str.replace("\n", "");
@@ -233,6 +262,10 @@ public class FtpServerClient implements Runnable
 	    this.processCWD(str);
 	else if (str.startsWith("SYST"))
 	    this.processSYST(str);
+	else if (str.startsWith("PORT"))
+	    this.processPORT(str);
+	else
+	    out.println(ReturnCodes.SYNTAX_ERROR);
     }
 
     private void setPwd(String pwd)
