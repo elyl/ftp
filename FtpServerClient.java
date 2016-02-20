@@ -137,6 +137,11 @@ public class FtpServerClient implements Runnable
 		out.println(ReturnCodes.NOT_LOGGED_IN);
 		return;
 	    }
+	if (this.sout == null)
+	    {
+		out.println(ReturnCodes.NO_DATA);
+		return;
+	    }
 	params = str.split(" ");
 	if (params.length < 2)
 	    {
@@ -227,13 +232,16 @@ public class FtpServerClient implements Runnable
 	addr = params[0] + "." + params[1] + "." + params[2] + "." + params[3];
 	try
 	    {
-		this.sout = new Socket(addr, Integer.parseInt(params[4] + params[5]));
+		this.sout = new Socket(addr, (Integer.parseInt(params[4]) << 8) + Integer.parseInt(params[5]));
 		this.dataOut = new PrintWriter(this.sout.getOutputStream(), true);
 	    }
 	catch (Exception e)
 	    {
-		out.println(ReturnCodes.SYNTAX_ERROR); //Plutot host error, truc dans le genre
+		e.printStackTrace();
+		out.println(ReturnCodes.SYNTAX_ERROR_PARAMETER);
+		return;
 	    }
+	out.println(ReturnCodes.COMMAND_OK);
     }
 
     public void processRequest(String str) throws Exception
