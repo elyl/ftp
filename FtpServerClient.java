@@ -181,14 +181,26 @@ public class FtpServerClient implements Runnable
 	this.resetDataStream();
     }
 
-    public void processLIST(String str)
+    public void processLIST(String str) throws Exception
     {
+	File	files[];
+	
 	if (!this.logged_in)
 	    {
 		out.println(ReturnCodes.NOT_LOGGED_IN);
 		return;
 	    }
-	System.out.println("LIST NYI");
+	if (this.sout == null)
+	    {
+		out.println(ReturnCodes.NO_DATA);
+		return;
+	    }
+	out.println(ReturnCodes.TRANSFER_START);
+	files = new File(this.pwd).listFiles();
+	for (int i = 0; i < files.length; ++i)
+	    dataOut.println(files[i].getName());
+	out.println(ReturnCodes.TRANSFER_OK);
+	this.resetDataStream();
     }
 
     public void processQUIT(String str) throws Exception
