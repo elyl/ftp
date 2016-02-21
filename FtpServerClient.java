@@ -3,6 +3,7 @@ import java.io.PrintWriter;
 import java.io.File;
 import java.io.FileReader;
 import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.util.Arrays;
 import java.nio.file.Path;
 
@@ -107,7 +108,11 @@ public class FtpServerClient implements Runnable
 		out.println(ReturnCodes.NOT_LOGGED_IN);
 		return;
 	    }
-	//Verifier output stream?
+	if (this.sout == null)
+	    {
+		out.println(ReturnCodes.NO_DATA);
+		return;
+	    }
 	params = str.split(" ");
 	if (params.length < 2)
 	    {
@@ -131,11 +136,13 @@ public class FtpServerClient implements Runnable
 	while ((buffer = bf.readLine()) != null)
 	    dataOut.write(buffer);
 	out.println(ReturnCodes.TRANSFER_OK);
+	this.resetDataStream();
     }
 
-    public void processSTOR(String str)
+    public void processSTOR(String str) throws Exception
     {
 	String	params[];
+	String	buffer;
 	File	f;
 	
 	if (!this.logged_in)
@@ -167,6 +174,10 @@ public class FtpServerClient implements Runnable
 		out.println(ReturnCodes.ACCESS_DENIED);
 		return;
 	    }
+	while ((buffer = dataIn.readLine()) != null)
+	    dataOut.write(buffer);
+	out.println(ReturnCodes.TRANSFER_OK);
+	this.resetDataStream();
     }
 
     public void processLIST(String str)
@@ -240,6 +251,7 @@ public class FtpServerClient implements Runnable
 	    {
 		this.sout = new Socket(addr, (Integer.parseInt(params[4]) << 8) + Integer.parseInt(params[5]));
 		this.dataOut = new PrintWriter(this.sout.getOutputStream(), true);
+		this.dataIn = new BufferedReader(new InputStreamReader(this.sout.getInputStream()));
 	    }
 	catch (Exception e)
 	    {
@@ -287,5 +299,13 @@ public class FtpServerClient implements Runnable
 	if (!pwd.endsWith("/"))
 	    pwd += "/";
 	this.pwd = pwd;
+    }
+
+    private void resetDataStream() throws Exception
+    {
+	this.dataOut = null;
+	this.sout.close();
+	this.sout = null;
+	this.dataIn = null;
     }
 }
