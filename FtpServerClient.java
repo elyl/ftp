@@ -81,7 +81,7 @@ public class FtpServerClient implements Runnable
 			if (pass != null && pass.equals(params[1]))
 			    {
 				out.println(ReturnCodes.LOGGED_IN);
-				out.println("230 - Happy ftp !");
+				//out.println("230 - Happy ftp !");
 				this.logged_in = true;
 				return;
 			    }
@@ -132,6 +132,7 @@ public class FtpServerClient implements Runnable
 		out.println(ReturnCodes.ACCESS_DENIED);
 		return;
 	    }
+	out.println(ReturnCodes.TRANSFER_START);
 	bf = new BufferedReader(new FileReader(f));
 	while ((buffer = bf.readLine()) != null)
 	    dataOut.write(buffer);
@@ -174,6 +175,7 @@ public class FtpServerClient implements Runnable
 		out.println(ReturnCodes.ACCESS_DENIED);
 		return;
 	    }
+	out.println(ReturnCodes.TRANSFER_START);
 	while ((buffer = dataIn.readLine()) != null)
 	    dataOut.write(buffer);
 	out.println(ReturnCodes.TRANSFER_OK);
