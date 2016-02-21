@@ -81,7 +81,6 @@ public class FtpServerClient implements Runnable
 			if (pass != null && pass.equals(params[1]))
 			    {
 				out.println(ReturnCodes.LOGGED_IN);
-				//out.println("230 - Happy ftp !");
 				this.logged_in = true;
 				return;
 			    }
@@ -142,9 +141,10 @@ public class FtpServerClient implements Runnable
 
     public void processSTOR(String str) throws Exception
     {
-	String	params[];
-	String	buffer;
-	File	f;
+	String		params[];
+	String		buffer;
+	File		f;
+	PrintWriter	pr;
 	
 	if (!this.logged_in)
 	    {
@@ -165,19 +165,18 @@ public class FtpServerClient implements Runnable
 	f = new File(params[1]);
 	if (!f.isAbsolute())
 	    f = new File(this.pwd + params[1]);
-	if (f.isAbsolute() && !f.exists())
-	    {
-		out.println(ReturnCodes.FILE_NOT_FOUND);
-		return;
-	    }
+	f.delete();
+	f.createNewFile();
 	if (!f.canWrite())
 	    {
 		out.println(ReturnCodes.ACCESS_DENIED);
 		return;
 	    }
+	pr = new PrintWriter(f);
 	out.println(ReturnCodes.TRANSFER_START);
 	while ((buffer = dataIn.readLine()) != null)
-	    dataOut.write(buffer);
+	    pr.println(buffer);
+	pr.close();
 	out.println(ReturnCodes.TRANSFER_OK);
 	this.resetDataStream();
     }
