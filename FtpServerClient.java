@@ -2,20 +2,22 @@ import java.net.Socket;
 import java.io.PrintWriter;
 import java.io.File;
 import java.io.FileReader;
+import java.io.BufferedReader;
 import java.util.Arrays;
 import java.nio.file.Path;
 
 public class FtpServerClient implements Runnable
 {
-    private PrintWriter	out;
-    private Socket	s;
-    private FtpServer	server;
-    private String	user;
-    private boolean	logged_in;
-    private boolean	running;
-    private String	pwd;
-    private PrintWriter	dataOut;
-    private Socket	sout;
+    private PrintWriter		out;
+    private Socket		s;
+    private FtpServer		server;
+    private String		user;
+    private boolean		logged_in;
+    private boolean		running;
+    private String		pwd;
+    private PrintWriter		dataOut;
+    private BufferedReader	dataIn;
+    private Socket		sout;
     
     public FtpServerClient(Socket s, FtpServer server) throws Exception
     {
@@ -95,8 +97,10 @@ public class FtpServerClient implements Runnable
 
     public void processRETR(String str) throws Exception
     {
-	String	params[];
-	File	f;
+	String		params[];
+	File		f;
+	BufferedReader	bf;
+	String		buffer;
 	
 	if (!this.logged_in)
 	    {
@@ -123,7 +127,9 @@ public class FtpServerClient implements Runnable
 		out.println(ReturnCodes.ACCESS_DENIED);
 		return;
 	    }
-	dataOut.write(new FileReader(f).read());
+	bf = new BufferedReader(new FileReader(f));
+	while ((buffer = bf.readLine()) != null)
+	    dataOut.write(buffer);
 	out.println(ReturnCodes.TRANSFER_OK);
     }
 
