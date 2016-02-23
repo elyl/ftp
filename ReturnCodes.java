@@ -3,6 +3,7 @@ public class ReturnCodes
     public static final String TRANSFER_START = "125 Data connection already open; starting file transfer";
     public static final String COMMAND_OK = "200 Command OK";
     public static final String CONNECTION_ESTABLISHED = "220 Service ready";
+    public static final String GOODBYE = "221 Goodbye";
     public static final String DIRECTORY_CHANGED = "250 Directory changed";
     public static final String PWD = "257 Current directory is ";
     public static final String USER_OK = "331 User name OK, password required";

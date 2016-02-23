@@ -184,6 +184,7 @@ public class FtpServerClient implements Runnable
 
     public void processQUIT(String str) throws Exception
     {
+	out.println(ReturnCodes.GOODBYE);
 	this.running = false;
 	s.close();
     }
@@ -241,7 +242,6 @@ public class FtpServerClient implements Runnable
 	    }
 	catch (Exception e)
 	    {
-		e.printStackTrace();
 		out.println(ReturnCodes.SYNTAX_ERROR_PARAMETER);
 		return;
 	    }
@@ -289,10 +289,8 @@ public class FtpServerClient implements Runnable
 
     private void resetDataStream() throws Exception
     {
-	this.dataOut = null;
 	this.sout.close();
 	this.sout = null;
-	this.dataIn = null;
     }
 
     public boolean checkLogin()
