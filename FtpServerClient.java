@@ -20,14 +20,14 @@ public class FtpServerClient implements Runnable
     private BufferedReader	dataIn;
     private Socket		sout;
     
-    public FtpServerClient(Socket s, FtpServer server) throws Exception
+    public FtpServerClient(Socket s, FtpServer server, String pwd) throws Exception
     {
 	this.s = s;
 	this.user = null;
 	this.logged_in = false;
 	this.server = server;
 	this.running = true;
-	this.setPwd("/home/elyl");
+	this.setPwd(pwd);
 	out = new PrintWriter(s.getOutputStream(), true);
 	out.println(ReturnCodes.CONNECTION_ESTABLISHED);
     }

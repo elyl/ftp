@@ -9,12 +9,14 @@ public class FtpServer
 {
     private ServerSocket	ss;
     private Map<String, String>	users;
+    private String		basePwd;
 
-    public FtpServer(int port) throws Exception
+    public FtpServer(int port, String basePwd) throws Exception
     {
 	this.ss = new ServerSocket(port);
 	this.users = new HashMap<String, String>();
 	this.users.put("toto", "toto");
+	this.basePwd = basePwd;
     }
 
     public void launch() throws Exception
@@ -24,7 +26,7 @@ public class FtpServer
 	while (true)
 	    {
 		s = this.ss.accept();
-		new Thread(new FtpServerClient(s, this)).start();
+		new Thread(new FtpServerClient(s, this, this.basePwd)).start();
 	    }
     }
 
@@ -35,6 +37,9 @@ public class FtpServer
     
     public static void main(String args[]) throws Exception
     {
-	new FtpServer(Integer.parseInt(args[0])).launch();
+	if (args.length < 2)
+	    System.out.println("Usage : <port> <pwd>");
+	else
+	    new FtpServer(Integer.parseInt(args[0]), args[1]).launch();
     }
 }
