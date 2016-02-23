@@ -58,13 +58,13 @@ public class FtpServerClient implements Runnable
 	String	params[];
 	
 	params = str.split(" ");
-	if (params.length >= 2)
+	if (params.length < 2)
 	    {
-		this.user = params[1];
-		out.println(ReturnCodes.USER_OK);
+		out.println(ReturnCodes.SYNTAX_ERROR);
+		return;
 	    }
-	else
-	    out.println(ReturnCodes.SYNTAX_ERROR);
+	this.user = params[1];
+	out.println(ReturnCodes.USER_OK);
     }
 
     public void processPASS(String str)
@@ -72,27 +72,27 @@ public class FtpServerClient implements Runnable
 	String	params[];
 	String	pass;
 	
-	if (this.user != null)
+	if (this.user == null)
 	    {
-		params = str.split(" ");
-		if (params.length >= 2)
-		    {
-			pass = this.server.getUser(this.user);
-			if (pass != null && pass.equals(params[1]))
-			    {
-				out.println(ReturnCodes.LOGGED_IN);
-				this.logged_in = true;
-				return;
-			    }
-			else
-			    out.println(ReturnCodes.NOT_LOGGED_IN);
-		    }
-		else
-		    out.println(ReturnCodes.SYNTAX_ERROR);
-		this.user = null;
+		out.println(ReturnCodes.USER_KO);
+		return;
 	    }
-	else
-	    out.println(ReturnCodes.USER_KO);
+	params = str.split(" ");
+	if (!checkParams(params.length, 2))
+	    {
+		this.user = null;
+		return;
+	    }
+	pass = this.server.getUser(this.user);
+	if (!(pass != null && pass.equals(params[1])))
+	    {
+		this.user = null;
+		out.println(ReturnCodes.NOT_LOGGED_IN);
+		return;
+	    }
+	
+	out.println(ReturnCodes.LOGGED_IN);
+	this.logged_in = true;
     }
 
     public void processRETR(String str) throws Exception
@@ -102,22 +102,13 @@ public class FtpServerClient implements Runnable
 	BufferedReader	bf;
 	String		buffer;
 	
-	if (!this.logged_in)
-	    {
-		out.println(ReturnCodes.NOT_LOGGED_IN);
-		return;
-	    }
-	if (this.sout == null)
-	    {
-		out.println(ReturnCodes.NO_DATA);
-		return;
-	    }
+	if (!checkLogin())
+	    return;
+	if (!checkDataConnection())
+	    return;
 	params = str.split(" ");
-	if (params.length < 2)
-	    {
-		out.println(ReturnCodes.SYNTAX_ERROR);
-		return;
-	    }
+	if (!checkParams(params.length, 2))
+	    return;
 	f = new File(params[1]);
 	if (!f.isAbsolute())
 	    f = new File(this.pwd + params[1]);
@@ -131,6 +122,7 @@ public class FtpServerClient implements Runnable
 		out.println(ReturnCodes.ACCESS_DENIED);
 		return;
 	    }
+	
 	out.println(ReturnCodes.TRANSFER_START);
 	bf = new BufferedReader(new FileReader(f));
 	while ((buffer = bf.readLine()) != null)
@@ -146,22 +138,13 @@ public class FtpServerClient implements Runnable
 	File		f;
 	PrintWriter	pr;
 	
-	if (!this.logged_in)
-	    {
-		out.println(ReturnCodes.NOT_LOGGED_IN);
-		return;
-	    }
-	if (this.sout == null)
-	    {
-		out.println(ReturnCodes.NO_DATA);
-		return;
-	    }
+	if (!checkLogin())
+	    return;
+	if (!checkDataConnection())
+	    return;
 	params = str.split(" ");
-	if (params.length < 2)
-	    {
-		out.println(ReturnCodes.SYNTAX_ERROR);
-		return;
-	    }
+	if (!checkParams(params.length, 2))
+	    return;
 	f = new File(params[1]);
 	if (!f.isAbsolute())
 	    f = new File(this.pwd + params[1]);
@@ -172,6 +155,7 @@ public class FtpServerClient implements Runnable
 		out.println(ReturnCodes.ACCESS_DENIED);
 		return;
 	    }
+	
 	pr = new PrintWriter(f);
 	out.println(ReturnCodes.TRANSFER_START);
 	while ((buffer = dataIn.readLine()) != null)
@@ -185,16 +169,11 @@ public class FtpServerClient implements Runnable
     {
 	File	files[];
 	
-	if (!this.logged_in)
-	    {
-		out.println(ReturnCodes.NOT_LOGGED_IN);
-		return;
-	    }
-	if (this.sout == null)
-	    {
-		out.println(ReturnCodes.NO_DATA);
-		return;
-	    }
+	if (!checkLogin())
+	    return;
+	if (!checkDataConnection())
+	    return;
+	
 	out.println(ReturnCodes.TRANSFER_START);
 	files = new File(this.pwd).listFiles();
 	for (int i = 0; i < files.length; ++i)
@@ -219,23 +198,22 @@ public class FtpServerClient implements Runnable
 	String	params[];
 	File	f;
 
-	params = str.split(" ");	
-	if (params.length >= 2)
+	if (!checkLogin())
+	    return;
+	params = str.split(" ");
+	if (!checkParams(params.length, 2))
+	    return;
+	f = new File(params[1]);
+	if (!f.isAbsolute())
+	    f = new File(this.pwd + params[1]);
+	if (!f.exists())
 	    {
-		f = new File(params[1]);
-		if (!f.isAbsolute())
-		    f = new File(this.pwd + params[1]);
-		System.out.println(f);
-		if (f.exists())
-		    {
-			this.setPwd(f.toString());
-			out.println(ReturnCodes.DIRECTORY_CHANGED);
-		    }
-		else
-		    out.println(ReturnCodes.FILE_NOT_FOUND);
+		out.println(ReturnCodes.FILE_NOT_FOUND);
+		return;
 	    }
-	else
-	    out.println(ReturnCodes.SYNTAX_ERROR);
+    
+	this.setPwd(f.toString());
+	out.println(ReturnCodes.DIRECTORY_CHANGED);
     }
 
     public void processSYST(String str)
@@ -248,17 +226,12 @@ public class FtpServerClient implements Runnable
 	String	params[];
 	String	addr;
 
+	if (!this.checkLogin())
+	    return;
 	params = str.split(" ")[1].split(",");
-	if (params.length < 6)
-	    {
-		out.println(ReturnCodes.SYNTAX_ERROR);
-		return;
-	    }
-	if (!this.logged_in)
-	    {
-		out.println(ReturnCodes.NOT_LOGGED_IN);
-		return;
-	    }
+	if (!checkParams(params.length, 6))
+	    return;
+	
 	addr = params[0] + "." + params[1] + "." + params[2] + "." + params[3];
 	try
 	    {
@@ -320,5 +293,26 @@ public class FtpServerClient implements Runnable
 	this.sout.close();
 	this.sout = null;
 	this.dataIn = null;
+    }
+
+    public boolean checkLogin()
+    {
+	if (!this.logged_in)
+	    out.println(ReturnCodes.NOT_LOGGED_IN);
+	return (this.logged_in);
+    }
+
+    public boolean checkDataConnection()
+    {
+	if (this.sout == null)
+	    out.println(ReturnCodes.NO_DATA);
+	return (this.sout != null);
+    }
+
+    public boolean checkParams(int nbParams, int nbExpected)
+    {
+	if (nbParams < nbExpected)
+	    out.println(ReturnCodes.SYNTAX_ERROR);
+	return (nbParams >= nbExpected);
     }
 }
